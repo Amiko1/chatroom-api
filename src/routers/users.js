@@ -75,14 +75,47 @@ router.patch('/update', auth, async (req, res) => {
 })
 
 router.delete('/delete', auth, async (req, res) => {
-
     try {
         await req.user.remove()
         res.send(req.user)
     } catch (e) {
         res.status(500).send()
     }
+})
 
+router.get('/profile/:id', auth, async (req, res) => {
+
+    const id = req.params.id
+   
+    try {
+        let profileId = req.user.friends.find(userId => {
+            return id === userId.toString()
+        })
+
+        if (!profileId) throw new Error()
+        const userDoc = await UserModel.findOne(profileId)
+     
+        res.status(200).send(userDoc)
+
+    } catch (e) {
+        res.status(404).send('User is not your friend')
+    }
+
+})
+
+router.get('/friends', auth, async (req, res) => {
+    try {
+        if (req.user.friends === []) throw new Error()
+
+        await req.user.populate({ path: 'friends', select: 'username email' })
+
+        res.status(200).send(req.user.friends)
+
+    } catch (e) {
+
+        res.status(404).send('Cant find friends')
+
+    }
 
 })
 

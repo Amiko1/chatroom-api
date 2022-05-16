@@ -7,14 +7,14 @@ const { Schema } = mongoose;
 const userSchema = new Schema({
     username: {
         type: String,
-        required:true,
+        required: true,
         unique: true,
-        trim:true,
+        trim: true,
 
     },
     email: {
         type: String,
-        required:true,
+        required: true,
         unique: true,
         validate(value) {
             if (!validator.isEmail(value)) {
@@ -33,6 +33,13 @@ const userSchema = new Schema({
             }
         }
     },
+    friends: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+        }
+    ],
+    
     tokens: [{
         token: {
             type: String,
@@ -41,7 +48,7 @@ const userSchema = new Schema({
     }]
 })
 
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
     const user = this;
     if (user.isModified('password')) {
         user.password = await bcrypt.hash(user.password, 8)
@@ -49,12 +56,23 @@ userSchema.pre('save', async function(next) {
     next()
 })
 
+userSchema.methods.toJSON = function () {
+    const user = this
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
+
+
 userSchema.methods.generateAuthToken = async function () {
 
     const user = this
-    const token = jwt.sign({_id: user._id.toString()}, process.env.SECRET)
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.SECRET)
 
-    user.tokens = user.tokens.concat({token})
+    user.tokens = user.tokens.concat({ token })
     await user.save()
 
     return token
@@ -63,7 +81,7 @@ userSchema.methods.generateAuthToken = async function () {
 
 userSchema.statics.findByCredentials = async (email, password) => {
     const user = await UserModel.findOne({ email })
-    
+
     if (!user) {
         throw new Error('Unable to login')
     }

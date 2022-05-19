@@ -11,8 +11,10 @@ router.post('/register', async (req, res) => {
     try {
         await userDoc.save()
         const token = await userDoc.generateAuthToken()
+
         res.status(200).send({ userDoc, token })
     } catch (e) {
+        if (e.code === 11000) return res.status(409).send(e)
         res.status(400).send(e)
     }
 })
@@ -86,7 +88,7 @@ router.delete('/delete', auth, async (req, res) => {
 router.get('/profile/:id', auth, async (req, res) => {
 
     const id = req.params.id
-   
+
     try {
         let profileId = req.user.friends.find(userId => {
             return id === userId.toString()
@@ -94,7 +96,7 @@ router.get('/profile/:id', auth, async (req, res) => {
 
         if (!profileId) throw new Error()
         const userDoc = await UserModel.findOne(profileId)
-     
+
         res.status(200).send(userDoc)
 
     } catch (e) {

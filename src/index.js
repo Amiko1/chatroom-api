@@ -2,6 +2,10 @@
 const express = require('express')
 const app = express()
 
+//IMPORT CORS
+var cors = require('cors')
+
+
 //IMPORT ROUTERS
 const userRouter = require('./routers/users')
 
@@ -13,8 +17,11 @@ const port = process.env.PORT
 //INIT DATABASE
 require('./db/mongoose')
 
-//REGISTER ROUTERS
+//REGISTER Midleware
 app.use(express.json())
+app.use(cors())
+
+//Register routers
 app.use('/user', userRouter)
 
 
